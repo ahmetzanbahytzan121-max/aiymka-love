@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>У меня для тебя письмо ❤️</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #ffeef2 0%, #ffd6e0 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      perspective: 1000px;
+    }
+
+    .container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Конверт */
+    .envelope-wrapper {
+      position: relative;
+      width: 320px;
+      height: 220px;
+      background: #f77f9e;
+      border-radius: 12px;
+      box-shadow: 0 15px 35px rgba(220, 68, 105, 0.25);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .envelope-wrapper:hover {
+      transform: translateY(-4px);
+    }
+
+    /* Клапан конверта */
+    .envelope-flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 160px solid transparent;
+      border-right: 160px solid transparent;
+      border-top: 120px solid #e85d82;
+      transform-origin: top;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 4;
+    }
+
+    .envelope-flap.open {
+      transform: rotateX(180deg);
+      z-index: 1;
+    }
+
+    /* Передняя часть кармана */
+    .envelope-pocket {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 160px solid #f991ac;
+      border-right: 160px solid #f991ac;
+      border-bottom: 120px solid #f26f91;
+      border-top: 100px solid transparent;
+      border-radius: 0 0 12px 12px;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* Письмо внутри */
+    .letter {
+      position: absolute;
+      bottom: 10px;
+      left: 20px;
+      width: 280px;
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 24px 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      text-align: center;
+      transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 2;
+    }
+
+    .letter.out {
+      transform: translateY(-160px);
+      z-index: 5;
+    }
+
+    .letter h2 {
+      color: #e63946;
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+    }
+
+    .letter p {
+      color: #555;
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    /* Кнопки выбора */
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      position: relative;
+      height: 44px;
+    }
+
+    .btn {
+      padding: 8px 24px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .btn-yes {
+      background-color: #ff4d6d;
+      color: white;
+      box-shadow: 0 4px 12px rgba(255, 77, 109, 0.4);
+    }
+
+    .btn-yes:hover {
+      background-color: #ff2a54;
+      transform: scale(1.05);
+    }
+
+    .btn-no {
+      background-color: #f0f0f0;
+      color: #666;
+      position: absolute;
+      right: 25px;
+      transition: all 0.15s ease-out;
+    }
+
+    .click-hint {
+      margin-top: 25px;
+      font-size: 0.9rem;
+      color: #b05a7a;
+      animation: pulse 1.5s infinite;
+      transition: opacity 0.3s;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* Салют из сердец */
+    .heart {
+      position: absolute;
+      color: #ff3366;
+      font-size: 20px;
+      animation: flyUp 1.8s forwards ease-out;
+      pointer-events: none;
+    }
+
+    @keyframes flyUp {
+      0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty)) scale(1.6);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="envelope-wrapper" id="envelope">
+      <div class="envelope-flap" id="flap"></div>
+      
+      <div class="letter" id="letter">
+        <h2 id="titleText">Вопросик... ❤️</h2>
+        <p id="descText">Ты ведь меня любишь?</p>
+        <div class="btn-group" id="actions">
+          <button class="btn btn-yes" id="yesBtn">Да!</button>
+          <button class="btn btn-no" id="noBtn">Нет</button>
+        </div>
+      </div>
+
+      <div class="envelope-pocket"></div>
+    </div>
+    
+    <div class="click-hint" id="hint">Нажми на конверт 💌</div>
+  </div>
+
+  <script>
+    const envelope = document.getElementById('envelope');
+    const flap = document.getElementById('flap');
+    const letter = document.getElementById('letter');
+    const hint = document.getElementById('hint');
+    const noBtn = document.getElementById('noBtn');
+    const yesBtn = document.getElementById('yesBtn');
+    const titleText = document.getElementById('titleText');
+    const descText = document.getElementById('descText');
+    const actions = document.getElementById('actions');
+
+    let isOpen = false;
+
+    // Открытие конверта
+    envelope.addEventListener('click', (e) => {
+      if (isOpen || e.target.closest('#letter')) return;
+      isOpen = true;
+      flap.classList.add('open');
+      hint.style.opacity = '0';
+
+      setTimeout(() => {
+        letter.classList.add('out');
+      }, 400);
+    });
+
+    // Убегающая кнопка "Нет"
+    function moveNoButton() {
+      const parentRect = actions.getBoundingClientRect();
+      const maxX = 130;
+      const maxY = 60;
+      
+      const randomX = (Math.random() - 0.5) * maxX * 2;
+      const randomY = (Math.random() - 0.5) * maxY * 2;
+
+      noBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
+    }
+
+    noBtn.addEventListener('mouseenter', moveNoButton);
+    noBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      moveNoButton();
+    });
+
+    // Нажатие на "Да"
+    yesBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      titleText.innerText = "Я так и знал! 🥰";
+      descText.innerText = "Я тебя тоже очень сильно люблю! ❤️";
+      actions.innerHTML = '<span style="font-size: 2rem;">💍✨</span>';
+      
+      for (let i = 0; i < 25; i++) {
+        spawnHeart();
+      }
+    });
+
+    function spawnHeart() {
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      heart.innerText = ['❤️', '💖', '💕', '✨'][Math.floor(Math.random() * 4)];
+      
+      const angle = Math.random() * 2 * Math.PI;
+      const distance = 80 + Math.random() * 150;
+      heart.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+      heart.style.setProperty('--ty', `${Math.sin(angle) * distance - 80}px`);
+      
+      heart.style.left = '50%';
+      heart.style.top = '50%';
+      document.body.appendChild(heart);
+
+      setTimeout(() => heart.remove(), 1800);
+    }
+  </script>
+</body>
+</html>
